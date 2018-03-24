@@ -70,11 +70,3 @@ $ dub run
   Field string buffer is reallocated per field character
 * Clean up `dsv.Parser` implementation::
   'cause damn
-* Normalize row sizes\
-This applies more to the current implementation or 'headerless' mode.
-Presently row sizes follow this rule:\
-_`a row will be the same size or larger than the row before it`_\
-This means the output arrays can be inconsistent in size like the following:
-```json
-[["1.1"],["2.1","2.2"]]
-```
