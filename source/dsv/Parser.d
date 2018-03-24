@@ -200,8 +200,8 @@ class Parser
   private void stepColumn() {
     col++;
     immutable int tmp = col + 1;
-    while (tmp > totalColumns)
-      totalColumns++;
+    if (tmp > totalColumns)
+      totalColumns = tmp;
     resizeColumn();
   }
 
