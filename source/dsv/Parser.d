@@ -104,9 +104,7 @@ class Parser
 
   private void handleDefault() {
     if (fieldState == FieldState.CLOSED) {
-      throw new InvalidFieldException(
-        format!"Improperly text delimited field at: row %d, col %d "(row + 1, col + 2)
-      );
+      throw new InvalidFieldException(row, col);
     }
 
     if (fieldState == FieldState.START) {
@@ -164,9 +162,7 @@ class Parser
       return;
     }
 
-    throw new InvalidFieldException(
-      format!"Improperly text delimited field at: row %d, col %d "(row + 1, col + 2)
-    );
+    throw new InvalidFieldException(row, col);
   }
 
   /**
