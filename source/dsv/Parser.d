@@ -60,6 +60,8 @@ class Parser
    */
   private int  inputIndex;
 
+  private bool needRow;
+
   this(
     immutable int stepSize,
     immutable char textDelimiter,
@@ -70,6 +72,7 @@ class Parser
     this.reallocStepSize = stepSize;
     this.fieldDelimiter = fieldDelimiter;
     this.textDelimiter = textDelimiter;
+    this.needRow = false;
     this.col = -1;
   }
 
@@ -133,7 +136,7 @@ class Parser
     if (col > -1) {
       if (fieldState != FieldState.START)
         appendField();
-      stepRow();
+      needRow = true;
     }
   }
 
@@ -175,10 +178,16 @@ class Parser
    *   - Resets the column index
    */
   private void stepRow() {
+    if (!needRow)
+      return;
+
     row++;
+
     while(row >= values.length)
       values.length += reallocStepSize;
+
     col = -1;
+    needRow = false;
   }
 
   /**
@@ -202,6 +211,7 @@ class Parser
   }
 
   private void appendField() {
+    stepRow();
     stepColumn();
     values[row][col] = fieldBuf;
     fieldBuf = "";
