@@ -1,31 +1,27 @@
-= D-DSV
-:source-highlighter: pygments
-Elizabeth Harper <foxcapade@gmail.com>
-v1.0, March 24, 2018
+# D-DSV
 
 Toy implementation of a simplistic delimiter separated value parser library in
 D.  Made for the purpose of getting familiar with D as a language.
 
-== Features
+## Features
 
-Input::
+* Input\
 One or more lines/chunks of text.
 
-Output::
+* Output\
 Currently parses input into a multi-dimensional array of strings.
 
-Controllable text delimiters::
+* Controllable text delimiters\
 Defaults to `"`
 
-Controllable field delimiters::
+* Controllable field delimiters\
 Defaults to `,`
 
-== Usage
+## Usage
 
-=== Line by Line from stdin
+### Line by Line from stdin
 
-[source,d]
-----
+```d
 import std.stdio;
 import dsv;
 
@@ -38,18 +34,15 @@ void main(string[] args){
 
   writeln(tsv.finish());
 }
-----
-
-[source,bash]
-----
+```
+```bash
 $ echo -n "foo\tbar\tfoobar\r\n\"fizz\"\t\t\"buzz\"\rping\tpong\n\tcat\t\"dog\"" | dub run
 [["foo", "bar", "foobar"], ["fizz", "", "buzz"], ["ping", "pong", ""], ["", "cat", "dog"]]
-----
+```
 
-=== Arbitrarily chunked input
+### Arbitrarily chunked input
 
-[source,d]
-----
+```d
 import std.stdio;
 import dsv;
 
@@ -63,30 +56,25 @@ void main(string[] args){
 
   writeln(tsv.finish());
 }
-----
-[source,bash]
-----
+```
+```bash
 $ dub run
 [["foo", "bar", "foobar"], ["fizz", "", "buzz"], ["ping", "pong", ""], ["", "cat", "dog"]]
-----
+```
 
-== TODO
+### TODO
 
-Handle headers::
+* Handle headers
   Current implementation treats headers as regular text
-Reduce buffer reallocations::
+* Reduce buffer reallocations::
   Field string buffer is reallocated per field character
-Clean up `dsv.Parser` implementation::
+* Clean up `dsv.Parser` implementation::
   'cause damn
-Normalize row sizes::
-
+* Normalize row sizes\
 This applies more to the current implementation or 'headerless' mode.
-Presently row sizes follow this rule:
-+
-_a row will be the same size or larger than the row before it_
-+
+Presently row sizes follow this rule:\
+_`a row will be the same size or larger than the row before it`_\
 This means the output arrays can be inconsistent in size like the following:
-+
-----
+```json
 [["1.1"],["2.1","2.2"]]
-----
+```
