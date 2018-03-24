@@ -133,7 +133,7 @@ class Parser
       fieldBuf ~= current;
       return;
     }
-    if (col > -1) {
+    if (col > -1 || fieldState != FieldState.START) {
       if (fieldState != FieldState.START)
         appendField();
       needRow = true;
