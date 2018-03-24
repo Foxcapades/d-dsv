@@ -207,7 +207,8 @@ class Parser
 
   private void resizeColumn() {
     if (values[row].length < totalColumns)
-      values[row].length = totalColumns;
+      for (int i; i <= row; i++)
+        values[i].length = totalColumns;
   }
 
   private void appendField() {
