@@ -6,8 +6,6 @@ v1.0, March 24, 2018
 Toy implementation of a simplistic delimiter separated value parser library in
 D.  Made for the purpose of getting familiar with D as a language.
 
-[toc]
-
 == Features
 
 Input::
