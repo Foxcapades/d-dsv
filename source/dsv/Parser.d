@@ -1,6 +1,7 @@
 module dsv.Parser;
 
 import std.format;
+import std.array;
 
 import dsv.FieldState;
 import dsv.InvalidFieldException;
@@ -30,30 +31,15 @@ class Parser
    */
   private string[][] values;
 
-  /**
-   * Current row index
-   */
-  private int row;
+  private int curRowIndex;
 
-  /**
-   * Current column index
-   */
-  private int col;
+  private int curColIndex;
 
-  /**
-   * Current field buffer
-   */
-  private string fieldBuf;
+  private Appender!string fieldBuffer;
 
-  /**
-   * Current character from input
-   */
-  private char current;
+  private char currentChar;
 
-  /**
-   * Next character from input
-   */
-  private char next;
+  private char nextChar;
 
   /**
    * Index of current character from input
@@ -72,22 +58,23 @@ class Parser
     this.reallocStepSize = stepSize;
     this.fieldDelimiter = fieldDelimiter;
     this.textDelimiter = textDelimiter;
+    this.fieldBuffer = appender!string;
     this.needRow = false;
-    this.col = -1;
+    this.curColIndex = -1;
   }
 
   public void parse(const char[] input) {
     for(inputIndex = 0; inputIndex < input.length; inputIndex++) {
-      current = input[inputIndex];
-      next    = inputIndex + 1 == input.length ? '\0' : input[inputIndex + 1];
+      currentChar = input[inputIndex];
+      nextChar    = inputIndex + 1 == input.length ? '\0' : input[inputIndex + 1];
 
-      if (current == fieldDelimiter) {
+      if (currentChar == fieldDelimiter) {
         handleFieldDelimiter();
-      } else if (current == textDelimiter) {
+      } else if (currentChar == textDelimiter) {
         handleTextDelimiter();
-      } else if (current == '\n') {
+      } else if (currentChar == '\n') {
         handleLineFeed();
-      } else if (current == '\r') {
+      } else if (currentChar == '\r') {
         handleCarriageReturn();
       } else {
         handleDefault();
@@ -96,31 +83,31 @@ class Parser
   }
 
   public string[][] finish() {
-    if (fieldBuf.length > 0) {
-      appendField();
+    if (fieldState != FieldState.START) {
+      step();
     }
-    return this.values[0..row+1].dup;
+    return this.values[0..curRowIndex+1].dup;
   }
 
   private void handleDefault() {
     if (fieldState == FieldState.CLOSED) {
-      throw new InvalidFieldException(row, col);
+      throw new InvalidFieldException(curRowIndex, curColIndex);
     }
 
     if (fieldState == FieldState.START) {
       fieldState = FieldState.PROCESSING;
     }
 
-    fieldBuf ~= current;
+    fieldBuffer.put(currentChar);
   }
 
   private void handleCarriageReturn() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuf ~= current;
+      fieldBuffer.put(currentChar);
       return;
     }
 
-    if (next == '\n')
+    if (nextChar == '\n')
       inputIndex++;
 
     handleLineFeed();
@@ -128,22 +115,22 @@ class Parser
 
   private void handleLineFeed() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuf ~= current;
+      fieldBuffer.put(currentChar);
       return;
     }
-    if (col > -1 || fieldState != FieldState.START) {
+    if (curColIndex > -1 || fieldState != FieldState.START) {
       if (fieldState != FieldState.START)
-        appendField();
+        step();
       needRow = true;
     }
   }
 
   private void handleFieldDelimiter() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuf ~= fieldDelimiter;
+      fieldBuffer.put(fieldDelimiter);
       return;
     }
-    appendField();
+    step();
   }
 
   private void handleTextDelimiter() {
@@ -153,65 +140,54 @@ class Parser
     }
 
     if (fieldState == FieldState.QUOTED) {
-      if (next == current) {
+      if (nextChar == currentChar) {
         inputIndex++;
-        fieldBuf ~= current;
+        fieldBuffer.put(currentChar);
       } else {
         fieldState = FieldState.CLOSED;
       }
       return;
     }
 
-    throw new InvalidFieldException(row, col);
+    throw new InvalidFieldException(curRowIndex, curColIndex);
   }
 
-  /**
-   * Shift Row Index
-   *
-   * Performs the following steps:
-   *   - Increments the current row index
-   *   - Resizes the row array if needed
-   *   - Resets the column index
-   */
   private void stepRow() {
     if (!needRow)
       return;
 
-    row++;
+    curRowIndex++;
 
-    while(row >= values.length)
+    while(curRowIndex >= values.length)
       values.length += reallocStepSize;
 
-    col = -1;
+    curColIndex = -1;
     needRow = false;
   }
 
-  /**
-   * Shift Column Index
-   *
-   * Performs the following steps:
-   *   - Increments the current column index
-   *   - Resizes the total column count if needed
-   */
   private void stepColumn() {
-    col++;
-    immutable int tmp = col + 1;
+    curColIndex++;
+    immutable int tmp = curColIndex + 1;
     if (tmp > totalColumns)
       totalColumns = tmp;
     resizeColumn();
   }
 
   private void resizeColumn() {
-    if (values[row].length < totalColumns)
-      for (int i; i <= row; i++)
+    if (values[curRowIndex].length < totalColumns)
+      for (int i; i <= curRowIndex; i++)
         values[i].length = totalColumns;
   }
 
-  private void appendField() {
+  private void step() {
     stepRow();
     stepColumn();
-    values[row][col] = fieldBuf;
-    fieldBuf = "";
+    pushBuffer();
+  }
+
+  private void pushBuffer() {
+    values[curRowIndex][curColIndex] = fieldBuffer.data();
+    fieldBuffer = appender!string;
     fieldState = FieldState.START;
   }
 }
