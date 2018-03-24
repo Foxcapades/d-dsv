@@ -1,0 +1,11 @@
+{
+  "name": "ddsv",
+  "description": "A toy delimiter separated text parser",
+  "homepage": "https://github.com/foxcapades/dsv",
+  "authors": [
+    "Elizabeth Harper <foxcapade@gmail.com>"
+  ],
+  "license": "MIT",
+  "targetType": "library",
+  "targetName": "dsv"
+}

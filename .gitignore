@@ -1,0 +1,7 @@
+.dub/
+.idea/
+out/
+*.o
+*.a
+*.iml
+
