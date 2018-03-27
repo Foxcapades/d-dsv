@@ -35,7 +35,7 @@ class Parser
 
   private int curColIndex;
 
-  private Appender!string fieldBuffer;
+  private Appender!(char[]) fieldBuffer;
 
   private char currentChar;
 
@@ -58,7 +58,7 @@ class Parser
     this.reallocStepSize = stepSize;
     this.fieldDelimiter = fieldDelimiter;
     this.textDelimiter = textDelimiter;
-    this.fieldBuffer = appender!string;
+    this.fieldBuffer = appender!(char[]);
     this.needRow = false;
     this.curColIndex = -1;
   }
@@ -186,8 +186,8 @@ class Parser
   }
 
   private void pushBuffer() {
-    values[curRowIndex][curColIndex] = fieldBuffer.data();
-    fieldBuffer = appender!string;
+    values[curRowIndex][curColIndex] = fieldBuffer.data().dup();
+    fieldBuffer.clear;
     fieldState = FieldState.START;
   }
 }
