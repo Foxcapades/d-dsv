@@ -32,7 +32,7 @@ void main(string[] args){
   while ((line = stdin.readln()) !is null)
     tsv.parse(line);
 
-  writeln(tsv.finish());
+  writeln(tsv.data());
 }
 ```
 ```bash
@@ -54,7 +54,7 @@ void main(string[] args){
   tsv.parse("zz\"\t\t\"buzz\"");
   tsv.parse("\rping\tpong\n\tcat\t\"dog\"\n\n\n\n");
 
-  writeln(tsv.finish());
+  writeln(tsv.data());
 }
 ```
 ```bash
