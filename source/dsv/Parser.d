@@ -4,7 +4,30 @@ import std.format;
 import std.array;
 
 import dsv.FieldState;
-import dsv.InvalidFieldException;
+import dsv.exception;
+
+struct FieldBuffer {
+  private char[] buffer;
+  private int position;
+  private const int stepSize;
+  this(const int step) {
+    buffer.length = step;
+    stepSize = step;
+  }
+  void put(const char c) {
+    const int tmp = position + 1;
+    if (tmp == buffer.length) {
+      buffer.length += stepSize;
+    }
+    buffer[position] = c;
+    position = tmp;
+  }
+  string dump() {
+    const int tmp = position;
+    position = 0;
+    return buffer[0..tmp].dup();
+  }
+}
 
 class Parser
 {
@@ -35,7 +58,7 @@ class Parser
 
   private int curColIndex;
 
-  private Appender!(char[]) fieldBuffer;
+  private FieldBuffer fieldBuffer;
 
   private char currentChar;
 
@@ -58,9 +81,9 @@ class Parser
     this.reallocStepSize = stepSize;
     this.fieldDelimiter = fieldDelimiter;
     this.textDelimiter = textDelimiter;
-    this.fieldBuffer = appender!(char[]);
     this.needRow = false;
     this.curColIndex = -1;
+    this.fieldBuffer = FieldBuffer(stepSize);
   }
 
   public void parse(const char[] input) {
@@ -82,7 +105,7 @@ class Parser
     }
   }
 
-  public string[][] finish() {
+  public string[][] data() {
     if (fieldState != FieldState.START) {
       step();
     }
@@ -161,22 +184,25 @@ class Parser
     while(curRowIndex >= values.length)
       values.length += reallocStepSize;
 
+    values[curRowIndex].length = totalColumns;
+
     curColIndex = -1;
     needRow = false;
   }
 
   private void stepColumn() {
     curColIndex++;
-    immutable int tmp = curColIndex + 1;
-    if (tmp > totalColumns)
+    if (curRowIndex == 0) {
+      const int tmp = curColIndex + 1;
+      values[0].length = tmp;
       totalColumns = tmp;
-    resizeColumn();
-  }
-
-  private void resizeColumn() {
-    if (values[curRowIndex].length < totalColumns)
-      for (int i; i <= curRowIndex; i++)
-        values[i].length = totalColumns;
+    } else if (curColIndex >= totalColumns) {
+      throw new TooManyColumnsException(
+        totalColumns,
+        curColIndex + 1,
+        curRowIndex
+      );
+    }
   }
 
   private void step() {
@@ -186,8 +212,7 @@ class Parser
   }
 
   private void pushBuffer() {
-    values[curRowIndex][curColIndex] = fieldBuffer.data().dup();
-    fieldBuffer.clear;
+    values[curRowIndex][curColIndex] = fieldBuffer.dump();
     fieldState = FieldState.START;
   }
 }
