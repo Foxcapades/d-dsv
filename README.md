@@ -66,7 +66,5 @@ $ dub run
 
 * Handle headers
   Current implementation treats headers as regular text
-* Reduce buffer reallocations::
-  Field string buffer is reallocated per field character
-* Clean up `dsv.Parser` implementation::
+* Clean up `dsv.Parser` implementation
   'cause damn
