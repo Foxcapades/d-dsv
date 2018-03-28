@@ -5,29 +5,7 @@ import std.array;
 
 import dsv.FieldState;
 import dsv.exception;
-
-struct FieldBuffer {
-  private char[] buffer;
-  private int position;
-  private const int stepSize;
-  this(const int step) {
-    buffer.length = step;
-    stepSize = step;
-  }
-  void put(const char c) {
-    const int tmp = position + 1;
-    if (tmp == buffer.length) {
-      buffer.length += stepSize;
-    }
-    buffer[position] = c;
-    position = tmp;
-  }
-  string dump() {
-    const int tmp = position;
-    position = 0;
-    return buffer[0..tmp].dup();
-  }
-}
+import dsv.buffer;
 
 class Parser
 {
@@ -58,7 +36,7 @@ class Parser
 
   private int curColIndex;
 
-  private FieldBuffer fieldBuffer;
+  private Buffer!char fieldBuffer;
 
   private char currentChar;
 
@@ -83,7 +61,7 @@ class Parser
     this.textDelimiter = textDelimiter;
     this.needRow = false;
     this.curColIndex = -1;
-    this.fieldBuffer = FieldBuffer(stepSize);
+    this.fieldBuffer = Buffer!char(stepSize);
   }
 
   public void parse(const char[] input) {
@@ -121,12 +99,12 @@ class Parser
       fieldState = FieldState.PROCESSING;
     }
 
-    fieldBuffer.put(currentChar);
+    fieldBuffer.append(currentChar);
   }
 
   private void handleCarriageReturn() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuffer.put(currentChar);
+      fieldBuffer.append(currentChar);
       return;
     }
 
@@ -138,7 +116,7 @@ class Parser
 
   private void handleLineFeed() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuffer.put(currentChar);
+      fieldBuffer.append(currentChar);
       return;
     }
     if (curColIndex > -1 || fieldState != FieldState.START) {
@@ -150,7 +128,7 @@ class Parser
 
   private void handleFieldDelimiter() {
     if (fieldState == FieldState.QUOTED) {
-      fieldBuffer.put(fieldDelimiter);
+      fieldBuffer.append(fieldDelimiter);
       return;
     }
     step();
@@ -165,7 +143,7 @@ class Parser
     if (fieldState == FieldState.QUOTED) {
       if (nextChar == currentChar) {
         inputIndex++;
-        fieldBuffer.put(currentChar);
+        fieldBuffer.append(currentChar);
       } else {
         fieldState = FieldState.CLOSED;
       }
@@ -212,7 +190,8 @@ class Parser
   }
 
   private void pushBuffer() {
-    values[curRowIndex][curColIndex] = fieldBuffer.dump();
+    values[curRowIndex][curColIndex] = fieldBuffer.data.dup;
+    fieldBuffer.clear;
     fieldState = FieldState.START;
   }
 }
