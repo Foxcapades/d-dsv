@@ -9,34 +9,15 @@ import dsv.buffer;
 
 class Parser
 {
-  /**
-   * Size of reallocation steps.
-   */
-  private immutable int reallocStepSize;
-
   private immutable char textDelimiter;
+
   private immutable char fieldDelimiter;
 
   private FieldState fieldState;
 
-  /**
-   * Total number of columns per row
-   *
-   * Value is used to pre-allocate each row to avoid repeated reallocations as
-   * fields are parsed.
-   */
-  private int totalColumns;
-
-  /**
-   * Parsed Rows/Columns
-   */
-  private string[][] values;
-
-  private int curRowIndex;
+  private int columnCount;
 
   private int curColIndex;
-
-  private Buffer!char fieldBuffer;
 
   private char currentChar;
 
@@ -49,18 +30,21 @@ class Parser
 
   private bool needRow;
 
+  private Buffer!(string[]) rowBuffer;
+
+  private Buffer!char fieldBuffer;
+
   this(
     immutable int stepSize,
     immutable char textDelimiter,
     immutable char fieldDelimiter
   ) {
     this.fieldState = FieldState.START;
-    this.values.length = stepSize;
-    this.reallocStepSize = stepSize;
     this.fieldDelimiter = fieldDelimiter;
     this.textDelimiter = textDelimiter;
-    this.needRow = false;
+    this.needRow = true;
     this.curColIndex = -1;
+    this.rowBuffer = Buffer!(string[])(stepSize);
     this.fieldBuffer = Buffer!char(stepSize);
   }
 
@@ -87,12 +71,12 @@ class Parser
     if (fieldState != FieldState.START) {
       step();
     }
-    return this.values[0..curRowIndex+1].dup;
+    return this.rowBuffer.data.dup;
   }
 
   private void handleDefault() {
     if (fieldState == FieldState.CLOSED) {
-      throw new InvalidFieldException(curRowIndex, curColIndex);
+      throw new InvalidFieldException(rowBuffer.length, curColIndex);
     }
 
     if (fieldState == FieldState.START) {
@@ -150,19 +134,16 @@ class Parser
       return;
     }
 
-    throw new InvalidFieldException(curRowIndex, curColIndex);
+    throw new InvalidFieldException(rowBuffer.length, curColIndex);
   }
 
   private void stepRow() {
     if (!needRow)
       return;
 
-    curRowIndex++;
-
-    while(curRowIndex >= values.length)
-      values.length += reallocStepSize;
-
-    values[curRowIndex].length = totalColumns;
+    string[] tmp;
+    tmp.length = columnCount;
+    rowBuffer.append(tmp);
 
     curColIndex = -1;
     needRow = false;
@@ -170,15 +151,15 @@ class Parser
 
   private void stepColumn() {
     curColIndex++;
-    if (curRowIndex == 0) {
+    if (rowBuffer.length == 1) {
       const int tmp = curColIndex + 1;
-      values[0].length = tmp;
-      totalColumns = tmp;
-    } else if (curColIndex >= totalColumns) {
+      rowBuffer.data[0].length = tmp;
+      columnCount = tmp;
+    } else if (curColIndex >= columnCount) {
       throw new TooManyColumnsException(
-        totalColumns,
+        columnCount,
         curColIndex + 1,
-        curRowIndex
+        rowBuffer.length
       );
     }
   }
@@ -190,7 +171,7 @@ class Parser
   }
 
   private void pushBuffer() {
-    values[curRowIndex][curColIndex] = fieldBuffer.data.dup;
+    rowBuffer.get(rowBuffer.length - 1)[curColIndex] = fieldBuffer.data.dup;
     fieldBuffer.clear;
     fieldState = FieldState.START;
   }
