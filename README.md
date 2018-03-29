@@ -19,25 +19,42 @@ Defaults to `,`
 
 ## Usage
 
-### Line by Line from stdin
+### Sample Input
 
+_test.tsv_
+```csv
+
+"hello"	goodbye
+"line
+	""breaks"""
+
+foo	bar
+	"fizz"
+
+```
+
+_test.d_
 ```d
 import std.stdio;
 import dsv;
 
-void main(string[] args){
+void main(string[] args) {
+  char[6] buffer;
   Parser tsv = new ParserBuilder().fieldDelimiter('\t').build();
-  string line;
+  char[] tmp;
 
-  while ((line = stdin.readln()) !is null)
-    tsv.parse(line);
+  do {
+    tmp = stdin.rawRead(buffer);
+    tsv.parse(tmp);
+  } while (tmp.length == buffer.length);
 
-  writeln(tsv.data());
+  writeln(tsv.data);
 }
 ```
+
 ```bash
-$ echo -n "foo\tbar\tfoobar\r\n\"fizz\"\t\t\"buzz\"\rping\tpong\n\tcat\t\"dog\"" | dub run
-[["foo", "bar", "foobar"], ["fizz", "", "buzz"], ["ping", "pong", ""], ["", "cat", "dog"]]
+$ cat test.csv | dub run
+[["hello", "goodbye"], ["line\n\t\"breaks\"", ""], ["foo", "bar"], ["", "fizz"]]
 ```
 
 ### Arbitrarily chunked input
