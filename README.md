@@ -1,6 +1,6 @@
 # D-DSV
 
-Toy implementation of a simplistic delimiter separated value parser library in
+Toy implementation of a simplistic csv/tsv/*sv separated value parser library in
 D.  Made for the purpose of getting familiar with D as a language.
 
 ## Usage
@@ -25,16 +25,16 @@ import std.stdio;
 import dsv;
 
 void main(string[] args) {
-  char[6] buffer;
-  Parser tsv = new ParserBuilder().fieldDelimiter('\t').build();
+  char[5] buffer;
+  HeadlessParser tsv = new HeadlessParser('\t', '"', 100);
   char[] tmp;
 
   do {
     tmp = stdin.rawRead(buffer);
-    tsv.parse(tmp);
+    tsv.write(tmp);
   } while (tmp.length == buffer.length);
 
-  writeln(tsv.data);
+  writeln(tsv.read);
 }
 ```
 
@@ -46,6 +46,3 @@ $ cat test.csv | dub run
 ### TODO
 
 * Handle headers
-  Current implementation treats headers as regular text
-* Clean up `dsv.Parser` implementation
-  'cause damn

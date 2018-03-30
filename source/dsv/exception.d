@@ -4,23 +4,23 @@ import std.format;
 
 class InvalidFieldException : Exception {
   this(
-    const int row,
-    const int col,
+    const size_t row,
+    const size_t col,
     const string file = __FILE__,
     const size_t line = __LINE__
   ) {
-    super(format!"Invalid field: row %d, col %d"(row + 1, col + 2), file, line);
+    super(format!"Invalid field: row %d, col %d"(row, col + 2), file, line);
   }
 }
 
 class TooManyColumnsException: Exception {
   this(
-    const int expected,
-    const int actual,
-    const int row,
+    const size_t expected,
+    const size_t actual,
+    const size_t row,
     const string file = __FILE__,
     const size_t line = __LINE__
   ) {
-    super(format!"too many columns on row %d; expected %d, got %d"(row + 1, expected, actual));
+    super(format!"too many columns on row %d; expected %d, got %d"(row, expected, actual));
   }
 }

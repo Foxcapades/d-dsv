@@ -3,17 +3,17 @@ module dsv.buffer;
 struct Buffer(T) {
   private T[] buffer;
 
-  private int position;
+  private size_t position;
 
-  private immutable int stepSize;
+  private immutable size_t stepSize;
 
-  this(immutable int stepSize) {
+  this(immutable size_t stepSize) {
     this.buffer.length = stepSize;
     this.stepSize = stepSize;
   }
 
   void append(T row) {
-    const int tmp = position + 1;
+    const size_t tmp = position + 1;
     if (tmp == buffer.length) {
       buffer.length += stepSize;
     }
@@ -21,11 +21,11 @@ struct Buffer(T) {
     position = tmp;
   }
 
-  T get(immutable int i) {
+  T get(immutable size_t i) {
     return buffer[i];
   }
 
-  int length() {
+  size_t length() {
     return position;
   }
 
