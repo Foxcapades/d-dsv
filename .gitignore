@@ -4,4 +4,9 @@ out/
 *.o
 *.a
 *.iml
-
+*.sh
+*.tsv
+dub.selections.json
+before
+after
+source/tmp.d

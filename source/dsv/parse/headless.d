@@ -3,8 +3,9 @@ module dsv.parse.headless;
 import dsv.buffer;
 import dsv.state;
 import dsv.exception;
+import dsv.parse.parser;
 
-class HeadlessParser {
+class HeadlessParser : Parser!(string[]) {
 
   private immutable char cellSep;
 
